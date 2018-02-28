@@ -1,0 +1,166 @@
+---
+title: "Computational Modeling - Week 5 - Assignment 2 - Part 2"
+author: "Riccardo Fusaroli"
+date: "2/19/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## In this assignment we learn how to assess rates from a binomial distribution, using the case of assessing your teachers' knowledge of CogSci.
+
+### Second part: Focusing on predictions
+
+Last year you assessed the teachers (darned time runs quick!). Now you want to re-test them and assess whether your models are producing reliable predictions. In Methods 3 we learned how to do machine-learning style assessment of predictions (e.g. rmse on testing datasets). Bayesian stats makes things a bit more complicated. So we'll try out how that works. N.B. You can choose which prior to use for the analysis of last year's data.
+
+Questions to be answered (but see guidance below):
+1- Write a paragraph discussing how assessment of prediction performance is different in Bayesian vs. frequentist models
+2- Provide at least one plot and one written line discussing prediction errors for each of the teachers.
+
+This is the old data:
+- Riccardo: 3 correct answers out of 6 questions
+- Kristian: 2 correct answers out of 2 questions (then he gets bored)
+- Josh: 160 correct answers out of 198 questions (Josh never gets bored)
+- Mikkel: 66 correct answers out of 132 questions
+
+This is the new data:
+- Riccardo: 9 correct answers out of 10 questions (then he freaks out about teaching preparation and leaves)
+- Kristian: 8 correct answers out of 12 questions
+- Josh: 148 correct answers out of 172 questions (again, Josh never gets bored)
+- Mikkel: 34 correct answers out of 65 questions
+
+Guidance Tips
+
+1. There are at least two ways of assessing predictions.
+2. Last year's results are this year's expectations.
+3. Are the parameter estimates changing? (way 1)
+4. How does the new data look in last year's predictive posterior? (way 2)
+
+
+```{r}
+
+setwd("~/Desktop/4. Semester/Computational models/Sem4Portfolio2")
+library(ggplot2)
+library(rethinking)
+
+# Creating a function to perform grid approximation
+grid_function=function(prior, correct, questions){
+  # Compute likelihood
+  likelihood = dbinom(correct, size = questions, prob = p_grid)
+
+  # Compute posterior 
+  unstd.posterior = likelihood*prior
+
+  # Stadardize
+  posterior = unstd.posterior/sum(unstd.posterior)
+  
+  Data=data.frame(grid=p_grid,posterior=posterior,prior=prior,likelihood=likelihood)
+  
+  return(Data)
+}
+
+#RICCARDO
+OldR=grid_function(uniform_prior, 3, 6)
+
+ggplot(OldR,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior/dens),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Riccardo")
+
+#KRISTIAN
+OldK=grid_function(uniform_prior, 2, 2)
+
+ggplot(OldK,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior/dens),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Kristian")
+
+#JOSHUA
+OldJ =grid_function(uniform_prior, 160, 198)
+
+ggplot(OldJ,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior/dens),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Josh")
+
+#MIKKEL
+OldM=grid_function(uniform_prior, 66, 132)
+
+ggplot(OldM,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior/dens),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Mikkel")
+
+#Using last years posterior as prior for the new data
+
+#New RICCARDO
+NewR=grid_function(OldR$posterior, 9, 10)
+
+ggplot(NewR,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Riccardo")
+
+#The data from last year is not good at predicting new data. With the few datapoints from last year, it left much uncertainty. The new data implies Riccardo to be better than chance, which was the assumption from last year.
+
+#New KRISTIAN
+NewK=grid_function(OldK$posterior, 8, 12)
+
+ggplot(NewK,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Kristian")
+
+#The data from last year is not good at predicting new data. The few datapoints from last year left much uncertainty. The new data gives a more certain estimate of Kristians actual knowledge of cog-sci. 
+
+# New JOSHUA
+NewJ =grid_function(OldJ$posterior, 148, 172)
+
+ggplot(NewJ,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Josh")
+
+#The data from last year is predicting the new data quite well. Josh answered many questions last year, which gave a more certain estimate. The new data lies close the what whas expected. The new data has both increased the probability of Joshua's knowledge of cog-sci to be well above chance, as well as increased percentage of actual knowledge of cog-sci.
+
+# New MIKKEL
+NewM=grid_function(OldM$posterior, 34, 65)
+
+ggplot(NewM,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Mikkel")
+
+#The data from last year is predicting the new data quite well. Like Joshua, Mikkel answered a lot of questions last year. The new data confirms the assumption, that Mikkel's knowledge of cog-sci is around chance level. The uncertainty has decreased a tiny bit. 
+
+#Riccardo
+samples <- sample( p_grid , prob=OldR$posterior , size=1e4 , replace=TRUE )
+right <- rbinom( 1e4 , size=10 , prob=samples ) 
+
+simplehist(right)
+
+#Josh
+samplesJ <- sample( p_grid , prob=OldJ$posterior , size=1e4 , replace=TRUE )
+rightJ <- rbinom( 1e4 , size=172 , prob=samples ) 
+
+simplehist(rightJ)
+
+#Mikkel
+samplesM <- sample( p_grid , prob=OldM$posterior , size=1e4 , replace=TRUE )
+rightM <- rbinom( 1e4 , size=65 , prob=samples ) 
+
+simplehist(rightM)
+
+#Kristian
+samplesK <- sample( p_grid , prob=OldK$posterior , size=1e4 , replace=TRUE )
+rightK <- rbinom( 1e4 , size=12 , prob=samples ) 
+
+simplehist(rightK)
+```
+
+### Depending on time: Questions from the handbook
+2H1. Suppose there are two species of panda bear. Both are equally common in the wild and live in the same places. They look exactly alike and eat the same food, and there is yet no genetic assay capable of telling them apart. They differ however in their family sizes. Species A gives birth to twins 10% of the time, otherwise birthing a single infant. Species B births twins 20% of the time, otherwise birthing singleton infants. Assume these numbers are known with certainty, from many years of field research.
+Now suppose you are managing a captive panda breeding program. You have a new female panda of unknown species, and she has just given birth to twins. What is the probability that her next birth will also be twins?
+
+```{r}
+
+```
+
+2H2. Recall all the facts from the problem above. Now compute the probability that the panda we have is from species A, assuming we have observed only the first birth and that it was twins.
+
+```{r}
+
+```
+
+2H3. Continuing on from the previous problem, suppose the same panda mother has a second birth and that it is not twins, but a singleton infant. Compute the posterior probability that this panda is species A.
+
+```{r}
+
+```
+
+2H4. A common boast of Bayesian statisticians is that Bayesian inference makes it easy to use all of the data, even if the data are of different types. So suppose now that a veterinarian comes along who has a new genetic test that she claims can identify the species of our mother panda. But the test, like all tests, is imperfect. This is the information you have about the test:
+- The probability it correctly identifies a species A panda is 0.8.
+- The probability it correctly identifies a species B panda is 0.65.
+The vet administers the test to your panda and tells you that the test is positive for species A. First ignore your previous information from the births and compute the posterior probability that your panda is species A. Then redo your calculation, now using the birth data as well.
+
+```{r}
+
+```
