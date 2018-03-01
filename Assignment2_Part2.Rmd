@@ -1,6 +1,6 @@
 ---
 title: "Computational Modeling - Week 5 - Assignment 2 - Part 2"
-author: "Riccardo Fusaroli"
+author: "Alberte Seeberg"
 date: "2/19/2017"
 output: html_document
 ---
@@ -88,6 +88,7 @@ NewR=grid_function(OldR$posterior, 9, 10)
 
 ggplot(NewR,aes(grid,posterior))+  geom_point()+geom_line()+theme_classic()+  geom_line(aes(grid,prior),color='red')+  xlab("Knowledge of CogSci")+ ylab("posterior probability") + ggtitle("Riccardo")
 
+
 #The data from last year is not good at predicting new data. With the few datapoints from last year, it left much uncertainty. The new data implies Riccardo to be better than chance, which was the assumption from last year.
 
 #New KRISTIAN
@@ -117,23 +118,31 @@ right <- rbinom( 1e4 , size=10 , prob=samples )
 
 simplehist(right)
 
+PI(samples, prob=0.68)
+
 #Josh
 samplesJ <- sample( p_grid , prob=OldJ$posterior , size=1e4 , replace=TRUE )
-rightJ <- rbinom( 1e4 , size=172 , prob=samples ) 
+rightJ <- rbinom( 1e4 , size=172 , prob=samplesJ ) 
 
 simplehist(rightJ)
 
+PI(samplesJ, prob=0.68)
+
 #Mikkel
 samplesM <- sample( p_grid , prob=OldM$posterior , size=1e4 , replace=TRUE )
-rightM <- rbinom( 1e4 , size=65 , prob=samples ) 
+rightM <- rbinom( 1e4 , size=65 , prob=samplesM ) 
 
 simplehist(rightM)
 
+PI(samplesM, prob=0.68)
+
 #Kristian
 samplesK <- sample( p_grid , prob=OldK$posterior , size=1e4 , replace=TRUE )
-rightK <- rbinom( 1e4 , size=12 , prob=samples ) 
+rightK <- rbinom( 1e4 , size=12 , prob=samplesK ) 
 
 simplehist(rightK)
+
+PI(samplesK, prob=0.68)
 ```
 
 ### Depending on time: Questions from the handbook
